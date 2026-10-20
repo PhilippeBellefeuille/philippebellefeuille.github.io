@@ -76,7 +76,7 @@ page=f"""<!doctype html>
 /* Layout: overview map pinned in a left column, totals and the ten collapsible stages on the right; stacks on phones. */
 .eyebrow {{ color: var(--primary); font-size: .875rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }}
 .hero h1 {{ font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; line-height: 1.15; margin: .5rem 0 1rem; text-wrap: balance; }}
-.hero p {{ max-inline-size: 62ch; font-size: 1.125rem; }}
+.hero p {{ font-size: 1.125rem; }}
 .totals {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-block-start: 2rem; }}
 .totals > div {{ background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: .75rem; padding: 1rem; }}
 .totals dt, .stats dt {{ font-size: .75rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--on-surface-variant); }}

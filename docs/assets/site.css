@@ -82,6 +82,10 @@ body.dark {
   --surface-container-highest: #3f4144;
 }
 
+/* Always reserve the scrollbar's space so content doesn't shift sideways when a page
+   (or one language's version of it) is just long enough to scroll. */
+html { scrollbar-gutter: stable; }
+
 /* Beer CSS makes body a grid whose content column sizes to its text, so page width
    changed with the language. A plain block keeps the width fixed. */
 body { display: block; font-size: 1rem; line-height: 1.6; letter-spacing: normal; }
