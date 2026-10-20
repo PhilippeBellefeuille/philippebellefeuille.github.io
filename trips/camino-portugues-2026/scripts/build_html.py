@@ -1,63 +1,54 @@
-import json, datetime as dt, html, pathlib
+import json, datetime as dt, html, pathlib, polyline
 TRIP=pathlib.Path(__file__).resolve().parent.parent
 OUT=TRIP.parent.parent/'docs'/'trips'/TRIP.name/'index.html'
-days=json.load(open(TRIP/'data/days.json')); svg=json.load(open(TRIP/'data/svg.json'))
-W,H=svg['W'],svg['H']
+days=json.load(open(TRIP/'data/days.json'))
 def hm(s): return f"{s//3600}h{(s%3600)//60:02d}"
 tot_d=sum(d['d'] for d in days); tot_eg=sum(d['eg'] for d in days); tot_mt=sum(d['mt'] for d in days); tot_et=sum(d['et'] for d in days)
 FR_DAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']; FR_MON={10:'octobre'}
 def fdate(s,lang):
     if lang=='en': return s.strftime('%A %-d %B %Y')
     return f"{FR_DAYS[s.weekday()]} {s.day} {FR_MON[s.month]} {s.year}"
-# map svg
-towns=svg['towns']
-route=''.join(f'<path class="route" d="{d["path"]}"/>' for d in svg['days'])
-marks=''
-for d in svg['days']:
-    x,y=d['start']; marks+=f'<circle class="mk" cx="{x}" cy="{y}" r="4.5"/><text class="mkn" x="{x+8}" y="{y+3.5}">{d["day"]}</text>'
-ex,ey=svg['days'][-1]['end']; marks+=f'<circle class="mk end" cx="{ex}" cy="{ey}" r="6"/>'
-labels=''
-for name,(x,y) in towns.items():
-    stage=name in {d['from'] for d in days}|{'Santiago de Compostela'}
-    anchor='end' if name in ('Vigo','Viana do Castelo','Póvoa de Varzim','Matosinhos','Paredes de Coura') else 'start'
-    dx=-10 if anchor=='end' else (22 if stage else 8)
-    labels+=f'<text class="town{" stage" if stage else ""}" x="{x+dx}" y="{y+4}" text-anchor="{anchor}">{html.escape(name)}</text>'
-    if not stage: labels+=f'<circle class="ctx" cx="{x}" cy="{y}" r="2.5"/>'
-mapsvg=f'''<svg viewBox="0 0 {W} {H}" role="img" aria-label="Route map, Matosinhos to Santiago de Compostela" preserveAspectRatio="xMidYMid meet">
-<rect width="{W}" height="{H}" class="sea"/>
-<path class="coast" d="{svg['coast']}"/>
-<path class="river" d="{svg['rivers']}"/>
-<path class="pt-es" d="{svg['border']}"/>
-{route}{labels}{marks}
-<text class="ocean" x="40" y="{H*0.55:.0f}" transform="rotate(-90 40 {H*0.55:.0f})">OCEANO ATLÂNTICO</text>
-<text class="country" x="{W-16}" y="{towns["Tui"][1]-60:.0f}" text-anchor="end">GALICIA · ES</text>
-<text class="country" x="{W-16}" y="{towns['Tui'][1]+40:.0f}" text-anchor="end">PORTUGAL</text>
-</svg>'''
-# day cards
+def fshort(s,lang):
+    if lang=='en': return s.strftime('%a %-d %b')
+    return f"{FR_DAYS[s.weekday()][:3]}. {s.day} oct."
+
+# Stage tracks for the maps: Strava summary polylines, decoded to [lat,lng].
+stages=[{'day':d['day'],'from':d['from'],'to':d['to'],'km':round(d['d']/1000,1),
+         'line':[[round(a,5),round(b,5)] for a,b in polyline.decode(d['pl'])]} for d in days]
+stages_json=json.dumps(stages,ensure_ascii=False,separators=(',',':'))
+
 cards=''
 for d in days:
     s=dt.datetime.fromisoformat(d['start']); e=s+dt.timedelta(seconds=d['et'])
     desc=html.escape(d['desc']).replace('\n','<br>')
     descblk=f'<blockquote class="strava"><div class="small-text muted upper">Strava</div>{desc}</blockquote>' if d['desc'] else ''
     cards+=f"""
-<article class="border day" id="day{d['day']}">
-  <div class="head">
+<details class="day" id="day{d['day']}" data-day="{d['day']}" name="stage">
+  <summary>
     <div class="dnum">{d['day']}</div>
-    <div>
+    <div class="sumtext">
       <h2 class="dtitle">{html.escape(d['from'])} <span class="to">→</span> {html.escape(d['to'])}</h2>
-      <div class="muted when"><span lang="fr">{fdate(s,'fr')}</span><span lang="en">{fdate(s,'en')}</span> · {s.strftime('%H:%M')} – {e.strftime('%H:%M')}</div>
+      <div class="muted when"><span lang="fr">{fshort(s,'fr')}</span><span lang="en">{fshort(s,'en')}</span> · {d['d']/1000:.1f} km · +{d['eg']:.0f} m</div>
     </div>
+    <i class="chev" aria-hidden="true">expand_more</i>
+  </summary>
+  <div class="dbody">
+    <div class="dmeta">
+      <div class="muted when"><span lang="fr">{fdate(s,'fr')}</span><span lang="en">{fdate(s,'en')}</span> · {s.strftime('%H:%M')} – {e.strftime('%H:%M')}</div>
+      <a class="button border small strava-link" href="https://www.strava.com/activities/{d['id']}" target="_blank" rel="noopener"><span lang="fr">Voir sur Strava</span><span lang="en">View on Strava</span><i>open_in_new</i></a>
+    </div>
+    <dl class="stats">
+      <div><dt><span lang="fr">Distance</span><span lang="en">Distance</span></dt><dd>{d['d']/1000:.1f} <small>km</small></dd></div>
+      <div><dt><span lang="fr">Dénivelé +</span><span lang="en">Elevation gain</span></dt><dd>{d['eg']:.0f} <small>m</small></dd></div>
+      <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span></dt><dd>{hm(d['mt'])}</dd></div>
+      <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span></dt><dd>{hm(d['et'])}</dd></div>
+    </dl>
+    <div class="map stage-map" data-day="{d['day']}" role="img" aria-label="Map of stage {d['day']}, {html.escape(d['from'])} to {html.escape(d['to'])}"></div>
+    {descblk}
+    <div class="notes"><span lang="fr">Vos notes pour cette étape viendront ici.</span><span lang="en">Your own notes for this day will go here.</span></div>
+    <div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>
   </div>
-  <dl class="stats">
-    <div><dt><span lang="fr">Distance</span><span lang="en">Distance</span></dt><dd>{d['d']/1000:.1f} <small>km</small></dd></div>
-    <div><dt><span lang="fr">Dénivelé +</span><span lang="en">Elevation gain</span></dt><dd>{d['eg']:.0f} <small>m</small></dd></div>
-    <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span></dt><dd>{hm(d['mt'])}</dd></div>
-    <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span></dt><dd>{hm(d['et'])}</dd></div>
-  </dl>
-  {descblk}
-  <div class="notes"><span lang="fr">Vos notes pour cette étape viendront ici.</span><span lang="en">Your own notes for this day will go here.</span></div>
-  <div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>
-</article>"""
+</details>"""
 longest=max(days,key=lambda d:d['d'])
 page=f"""<!doctype html>
 <html lang="fr">
@@ -68,9 +59,10 @@ page=f"""<!doctype html>
 <meta name="description" content="Dix jours sur le Caminho Português, de Matosinhos à Saint-Jacques-de-Compostelle, octobre 2026.">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beercss@5.0.3/dist/cdn/beer.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <style>
-/* Layout: route map pinned in a left column, totals and the ten stages flow on the right; stacks on phones. */
+/* Layout: overview map pinned in a left column, totals and the ten collapsible stages on the right; stacks on phones. */
 .eyebrow {{ color: var(--primary); font-size: .875rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }}
 .hero h1 {{ font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; line-height: 1.15; margin: .5rem 0 1rem; text-wrap: balance; }}
 .hero p {{ max-inline-size: 62ch; font-size: 1.125rem; }}
@@ -79,35 +71,66 @@ page=f"""<!doctype html>
 .totals dt, .stats dt {{ font-size: .75rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--on-surface-variant); }}
 .totals dd {{ font-size: 1.75rem; line-height: 1.2; margin-block-start: .25rem; font-variant-numeric: tabular-nums; }}
 .totals dd small, .stats dd small {{ font-size: .875rem; color: var(--on-surface-variant); }}
-.layout {{ display: grid; grid-template-columns: minmax(16rem, 23rem) 1fr; gap: 2.5rem; margin-block-start: 2.5rem; align-items: start; }}
+.layout {{ display: grid; grid-template-columns: minmax(18rem, 26rem) 1fr; gap: 2.5rem; margin-block-start: 2.5rem; align-items: start; }}
 .mapcol {{ position: sticky; top: 1rem; }}
 h2.section {{ font-size: 1.375rem; font-weight: 400; margin-block-end: .75rem; }}
-.mapcol svg {{ inline-size: 100%; block-size: auto; display: block; border: 1px solid var(--outline-variant); border-radius: .75rem; background: var(--surface-container-low); fill: none; }}
-.sea {{ fill: var(--surface-container-low); }}
-.coast {{ fill: none; stroke: var(--outline); stroke-width: 1.1; }}
-.river {{ fill: none; stroke: var(--outline-variant); stroke-width: .9; }}
-.pt-es {{ fill: none; stroke: var(--on-surface-variant); stroke-width: 1; stroke-dasharray: 4 3; }}
-.route {{ fill: none; stroke: var(--primary); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }}
-.mk {{ fill: var(--primary); stroke: var(--surface); stroke-width: 1.5; }} .mk.end {{ fill: var(--on-surface); }}
-.mkn {{ font: 700 10px var(--font); fill: var(--on-surface); }}
-.town {{ font: 11px var(--font); fill: var(--on-surface-variant); }} .town.stage {{ font-weight: 500; fill: var(--on-surface); }}
-.ctx {{ fill: var(--on-surface-variant); }}
-.ocean, .country {{ font: 500 10px var(--font); letter-spacing: .2em; fill: var(--outline); }}
-.legend {{ font-size: .8125rem; }}
+.legend {{ font-size: .8125rem; margin-block-start: .5rem; }}
 .days {{ min-inline-size: 0; }}
-article.day {{ --_padding: 1.25rem 1.5rem; margin-block-end: 1rem; background: var(--card); }}
-.day .head {{ display: flex; gap: 1rem; align-items: flex-start; }}
+
+/* Maps (Leaflet). Beer CSS sets border-radius:inherit on everything, which would round every tile. */
+.map {{ border: 1px solid var(--outline-variant); border-radius: .75rem; overflow: hidden; background: var(--surface-container-low); z-index: 0; }}
+.map * {{ border-radius: 0; }}
+#overview {{ block-size: min(78vh, 46rem); }}
+.stage-map {{ block-size: 20rem; margin-block-start: 1.25rem; }}
+.leaflet-container {{ font-family: var(--font); background: var(--surface-container-low); }}
+.leaflet-control-attribution {{ font-size: .6875rem; background: color-mix(in srgb, var(--surface) 80%, transparent) !important; color: var(--on-surface-variant); }}
+.leaflet-control-attribution a {{ color: var(--primary); }}
+.leaflet-bar a {{ background: var(--surface-container-high); color: var(--on-surface); border-color: var(--outline-variant); }}
+.leaflet-bar a:hover {{ background: var(--surface-container-highest); }}
+.leaflet-tooltip {{ background: var(--inverse-surface); color: var(--inverse-on-surface); border: 0; border-radius: .5rem !important; box-shadow: var(--elevate2); font-size: .8125rem; padding: .25rem .625rem; }}
+.leaflet-tooltip::before {{ display: none; }}
+.route {{ stroke: var(--primary); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; transition: stroke-opacity .2s, stroke-width .2s; }}
+.route.dim {{ stroke-opacity: .35; }}
+.route.hover, .route.active {{ stroke-width: 7; stroke-opacity: 1; }}
+.route-ctx {{ stroke: var(--outline); stroke-width: 3; stroke-opacity: .6; stroke-dasharray: 2 6; stroke-linecap: round; }}
+.hit {{ cursor: pointer; }}
+.leaflet-interactive:focus {{ outline: none; }}
+.pin {{ display: grid; place-items: center; inline-size: 100%; block-size: 100%; border-radius: 50% !important; background: var(--primary); color: var(--on-primary); border: 2px solid var(--surface); font: 500 11px/1 var(--font); box-shadow: var(--elevate1); cursor: pointer; }}
+.pin.finish {{ background: var(--on-surface); color: var(--surface); }}
+.pin.finish i {{ --_size: 15px; }}
+.pin.active {{ background: var(--primary-container); color: var(--on-primary-container); outline: 2px solid var(--primary); }}
+
+/* Stage cards: native <details>, one open at a time (name="stage"). */
+details.day {{ background: var(--card); border: 1px solid var(--outline-variant); border-radius: .75rem; margin-block-end: .75rem; scroll-margin-top: 1rem; transition: border-color .2s; }}
+details.day[open] {{ border-color: var(--outline); }}
+details.day > summary {{ display: flex; gap: 1rem; align-items: center; padding: 1rem 1.25rem; border-radius: .75rem; }}
+details.day > summary:hover {{ background: var(--surface-container-low); }}
+.sumtext {{ flex: 1; min-inline-size: 0; }}
 .dnum {{ flex: none; inline-size: 2.5rem; block-size: 2.5rem; border-radius: 50%; background: var(--primary-container); color: var(--on-primary-container); font-weight: 500; font-size: 1.125rem; display: grid; place-items: center; }}
-.dtitle {{ font-size: 1.25rem; font-weight: 500; line-height: 1.3; margin-block: .125rem; text-wrap: balance; }}
+.dtitle {{ font-size: 1.125rem; font-weight: 500; line-height: 1.3; text-wrap: balance; }}
 .to {{ color: var(--primary); }}
 .when {{ font-size: .875rem; }} .when [lang]::first-letter {{ text-transform: uppercase; }}
-.stats {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-block-start: 1.25rem; }}
+.chev {{ flex: none; color: var(--on-surface-variant); transition: transform .2s; }}
+details[open] > summary .chev {{ transform: rotate(180deg); }}
+.dbody {{ padding: 0 1.25rem 1.25rem; }}
+.dmeta {{ display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between; }}
+.strava-link {{ margin: 0; }}
+.strava-link i {{ --_size: 1.125rem; }}
+.stats {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-block-start: 1rem; }}
 .stats dd {{ font-size: 1.25rem; font-variant-numeric: tabular-nums; }}
 blockquote.strava {{ margin-block-start: 1.25rem; background: var(--surface-container-low); font-style: italic; }}
 blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-block-end: .25rem; }}
 .notes {{ margin-block-start: 1rem; padding: .75rem 1rem; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .9375rem; }}
 .photos {{ margin-block-start: 1rem; aspect-ratio: 3/1; display: grid; place-items: center; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .875rem; background: var(--surface-container-low); }}
-@media (max-width: 820px) {{ .layout {{ grid-template-columns: 1fr; gap: 2rem; }} .mapcol {{ position: static; }} .mapcol svg {{ max-block-size: 80vh; }} .stats {{ grid-template-columns: repeat(2, 1fr); }} article.day {{ --_padding: 1rem; }} }}
+@media (max-width: 820px) {{
+  .layout {{ grid-template-columns: 1fr; gap: 2rem; }}
+  .mapcol {{ position: static; }}
+  #overview {{ block-size: 60vh; }}
+  .stats {{ grid-template-columns: repeat(2, 1fr); }}
+  .stage-map {{ block-size: 16rem; }}
+  details.day > summary {{ padding: .875rem 1rem; gap: .75rem; }}
+  .dbody {{ padding: 0 1rem 1rem; }}
+}}
 </style>
 </head>
 <body data-lang="fr">
@@ -141,8 +164,8 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
 <div class="layout">
   <aside class="mapcol">
     <h2 class="section"><span lang="fr">Le parcours</span><span lang="en">The route</span></h2>
-    {mapsvg}
-    <p class="legend muted"><span lang="fr">Les numéros marquent le départ de chaque étape. Tracés GPS de Strava, fond de carte Natural Earth.</span><span lang="en">Numbers mark the start of each stage. GPS tracks from Strava, base map from Natural Earth.</span></p>
+    <div class="map" id="overview" role="img" aria-label="Route map, Matosinhos to Santiago de Compostela, ten stages"></div>
+    <p class="legend muted"><span lang="fr">Cliquez sur une étape pour l’ouvrir. Tracés GPS Strava.</span><span lang="en">Click a stage to open it. GPS tracks from Strava.</span></p>
   </aside>
   <section class="days">
     <h2 class="section"><span lang="fr">Étape par étape</span><span lang="en">Day by day</span></h2>
@@ -152,6 +175,104 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
 <footer class="site"><span lang="fr">Distances, dénivelés et temps tels qu’enregistrés par Strava (temps en marche = sans les pauses).</span><span lang="en">Distances, elevation and times as recorded by Strava (moving time excludes breaks).</span></footer>
 </main>
 <script src="../../assets/site.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const STAGES = {stages_json};
+const dark = window.matchMedia('(prefers-color-scheme: dark)');
+// Esri grey canvas basemaps: neutral, keyless, with a separate label layer on top.
+const esri = layer => 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' + layer + '/MapServer/tile/{{z}}/{{y}}/{{x}}';
+const tileUrls = () => dark.matches
+  ? [esri('World_Dark_Gray_Base'), esri('World_Dark_Gray_Reference')]
+  : [esri('World_Light_Gray_Base'), esri('World_Light_Gray_Reference')];
+const ATTR = 'Tiles &copy; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const tileLayers = [];
+
+function baseMap(el, opts) {{
+  const map = L.map(el, Object.assign({{ scrollWheelZoom: false, zoomSnap: 0.25, maxZoom: 16 }}, opts));
+  const [base, labels] = tileUrls();
+  const pane = map.createPane('labels');  // labels above the base, below the routes
+  pane.style.zIndex = 350; pane.style.pointerEvents = 'none';
+  const pair = [L.tileLayer(base, {{ attribution: ATTR, maxZoom: 16 }}).addTo(map), L.tileLayer(labels, {{ maxZoom: 16, pane: 'labels' }}).addTo(map)];
+  tileLayers.push(pair);
+  return map;
+}}
+dark.addEventListener('change', () => {{ const u = tileUrls(); tileLayers.forEach(([b, l]) => {{ b.setUrl(u[0]); l.setUrl(u[1]); }}); }});
+
+function pin(latlng, label, cls, size) {{
+  return L.marker(latlng, {{ icon: L.divIcon({{ className: '', html: '<div class="pin ' + (cls || '') + '">' + label + '</div>', iconSize: [size, size] }}), keyboard: false }});
+}}
+const stageName = s => s.day + ' · ' + s.from + ' → ' + s.to + ' · ' + s.km + ' km';
+const card = day => document.getElementById('day' + day);
+
+// Overview: every stage is a clickable line with a wider invisible hit area.
+const overview = baseMap('overview', {{ zoomControl: true }});
+const allBounds = L.latLngBounds(STAGES.flatMap(s => s.line));
+const fitAll = () => overview.fitBounds(allBounds, {{ padding: [24, 24] }});
+fitAll();  // a view must exist before vector layers are added
+const lines = {{}}, pins = {{}};
+const all = L.featureGroup().addTo(overview);
+STAGES.forEach(s => {{
+  const line = L.polyline(s.line, {{ className: 'route', interactive: false }}).addTo(all);
+  const hit = L.polyline(s.line, {{ className: 'hit', weight: 18, opacity: 0 }}).addTo(overview);
+  hit.bindTooltip(stageName(s), {{ sticky: true, direction: 'top', offset: [0, -8] }});
+  hit.on('mouseover', () => line.getElement().classList.add('hover'));
+  hit.on('mouseout', () => line.getElement().classList.remove('hover'));
+  hit.on('click', () => openStage(s.day, true));
+  const p = pin(s.line[0], s.day, '', 22).addTo(overview);
+  p.bindTooltip(stageName(s), {{ direction: 'top', offset: [0, -12] }});
+  p.on('click', () => openStage(s.day, true));
+  lines[s.day] = line; pins[s.day] = p;
+}});
+const last = STAGES[STAGES.length - 1];
+pin(last.line[last.line.length - 1], '<i>flag</i>', 'finish', 26).addTo(overview)
+  .bindTooltip('Santiago de Compostela', {{ direction: 'top', offset: [0, -14] }});
+
+function highlight(day) {{
+  STAGES.forEach(s => {{
+    const el = lines[s.day].getElement(), on = s.day === day;
+    el.classList.toggle('active', on);
+    el.classList.toggle('dim', day != null && !on);
+    pins[s.day].getElement().firstChild.classList.toggle('active', on);
+  }});
+  if (day != null) lines[day].bringToFront();
+}}
+
+// Stage maps are created the first time a stage opens (Leaflet needs a visible container).
+const stageMaps = {{}};
+function stageMap(day) {{
+  const s = STAGES[day - 1], el = card(day).querySelector('.stage-map');
+  if (stageMaps[day]) {{ stageMaps[day].invalidateSize(); return; }}
+  const map = baseMap(el, {{ dragging: !L.Browser.mobile, tap: false }});
+  map.fitBounds(L.latLngBounds(s.line), {{ padding: [28, 28] }});
+  STAGES.forEach(o => {{ if (o.day !== day) L.polyline(o.line, {{ className: 'route-ctx', interactive: false }}).addTo(map); }});
+  L.polyline(s.line, {{ className: 'route active', interactive: false }}).addTo(map);
+  pin(s.line[0], s.day, '', 22).addTo(map).bindTooltip(s.from, {{ direction: 'top', offset: [0, -12] }});
+  if (day === STAGES.length) pin(s.line[s.line.length - 1], '<i>flag</i>', 'finish', 26).addTo(map).bindTooltip(s.to, {{ direction: 'top', offset: [0, -14] }});
+  else pin(s.line[s.line.length - 1], s.day + 1, '', 22).addTo(map).bindTooltip(s.to, {{ direction: 'top', offset: [0, -12] }});
+  stageMaps[day] = map;
+}}
+
+function openStage(day, scroll) {{
+  const el = card(day);
+  if (!el.open) el.open = true; else onOpen(el);
+  if (scroll) requestAnimationFrame(() => el.scrollIntoView({{ behavior: 'smooth', block: 'start' }}));
+}}
+function onOpen(el) {{
+  const day = +el.dataset.day;
+  stageMap(day);
+  highlight(day);
+  history.replaceState(null, '', '#day' + day);
+  const top = el.getBoundingClientRect().top;
+  if (top < 0 || top > innerHeight * 0.8) el.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+}}
+document.querySelectorAll('details.day').forEach(el => el.addEventListener('toggle', () => {{
+  if (el.open) onOpen(el);
+  else if (!document.querySelector('details.day[open]')) {{ highlight(null); history.replaceState(null, '', location.pathname); }}
+}}));
+
+const m = location.hash.match(/^#day(\\d+)$/);
+if (m && card(+m[1])) openStage(+m[1], true);
+</script>
 </body>
 </html>
 """

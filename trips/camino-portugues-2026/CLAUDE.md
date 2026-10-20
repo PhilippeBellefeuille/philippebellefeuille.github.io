@@ -9,24 +9,31 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
 ## Current state (handed over from a Claude Cowork session, 20 Oct 2026)
 
 - `docs/trips/camino-portugues-2026/index.html` is the page (generated, do not hand-edit): bilingual FR/EN toggle (default FR),
-  totals, an inline SVG route map, and one section per stage with dates, start/end
+  totals, an interactive overview map, and one collapsible section per stage with dates, start/end
   times, distance, elevation gain, moving time, elapsed time, and the Strava
   description when there was one. Styled with the site theme (Beer CSS / Material 3,
   see root `CLAUDE.md`); the Cowork v1 warm theme (Bitter, yellow accent) was replaced
-  on 20 Oct 2026 at Philippe's request. Layout is unchanged.
+  on 20 Oct 2026 at Philippe's request.
+- Maps (added 20 Oct 2026, replacing the Cowork SVG map and its `gen_svg.py`/`svg.json`):
+  Leaflet 1.9.4 from cdnjs with Esri World Light/Dark Gray Canvas tiles plus their
+  `_Reference` label layer (keyless; CARTO basemaps now show an "API key required"
+  watermark). Tiles swap with the OS light/dark setting. Tracks are the Strava summary
+  polylines from `days.json`, decoded at build time and embedded as `STAGES`.
+  - Overview map: each stage is clickable (wide invisible hit line + numbered pin) with
+    a hover tooltip; click opens that stage's card, scrolls to it and highlights it.
+  - Stage cards are `<details name="stage">` (one open at a time). Opening one builds its
+    own map lazily, highlights it on the overview and sets `#dayN`; loading the page
+    with `#dayN` opens that stage.
+  - Leaflet gotchas: set a view (`fitBounds`) before adding vector layers or it throws
+    "reading 'min'"; Beer's `* {border-radius: inherit}` is reset inside `.map`.
+  - Full-resolution tracks (`get_activity_streams`, ~1000 points per stage) were tried but
+    are too large to move through the Strava connector into files reliably; the summary
+    polylines (~330 points, about one per 75 m) look fine at these zooms.
 - `data/days.json` is the source of truth: one object per stage with Strava
   activity id, stage endpoints (`from`/`to`), description, local start time,
   distance (m), moving/elapsed time (s), elevation gain (m), calories, and the
   reduced encoded polyline from Strava.
-- `data/svg.json` is the pre-projected map geometry (coastline, PT/ES border,
-  rivers from Natural Earth 10m, plus route paths, markers and town labels).
-- `scripts/gen_svg.py` regenerates `data/svg.json`. It needs the Natural Earth
-  10m GeoJSON files (coastline, admin_0_boundary_lines_land, rivers_lake_centerlines)
-  in `data/ne/` — not committed, fetch from
-  https://github.com/nvkelso/natural-earth-vector/tree/master/geojson if needed.
-  Only rerun this if a stage endpoint or map extent changes.
-- `scripts/build_html.py` regenerates the page from `data/days.json` and
-  `data/svg.json`. From the repo root:
+- `scripts/build_html.py` regenerates the page from `data/days.json`. From the repo root:
   `.venv/bin/python trips/camino-portugues-2026/scripts/build_html.py`
   (the venv has `polyline`; recreate with `python3 -m venv .venv && .venv/bin/pip install polyline`).
 - Moved from the Cowork zip into this repo on 20 Oct 2026. Changes made then: full HTML
