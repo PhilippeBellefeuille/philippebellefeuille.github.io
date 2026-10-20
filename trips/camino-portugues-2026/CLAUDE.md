@@ -8,7 +8,7 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
 
 ## Current state (handed over from a Claude Cowork session, 20 Oct 2026)
 
-- `docs/trips/camino-portugues-2026/index.html` is the page (generated, do not hand-edit): bilingual FR/EN toggle (default FR),
+- `docs/trips/camino-portugues-2026/index.html` is the page (generated, do not hand-edit): FR/EN/RU language toggle,
   totals, an interactive overview map, and one collapsible section per stage with dates, start/end
   times, distance, elevation gain, moving time, elapsed time, and the Strava
   description when there was one. Styled with the site theme (Beer CSS / Material 3,
@@ -39,11 +39,11 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
   distance (m), moving/elapsed time (s), elevation gain (m), calories, and the
   reduced encoded polyline from Strava.
 - `data/notes.json` holds Philippe's own content per day (keyed by day number):
-  `fr` and `en` arrays of paragraphs, and `hostel` {name, url} with his Google Maps link.
+  `fr`, `en` and `ru` arrays of paragraphs (same paragraph count in each), and `hostel` {name, url} with his Google Maps link.
   Rendered in each stage card as the notes text and a "Où j’ai dormi / Where I slept"
   row; days without notes show a "coming soon" line, days without a hostel show nothing.
   He writes in English; edit lightly (spelling, place names, flow) keeping his voice,
-  and write the French version. Hostel names come from the Google listing his link opens.
+  and write the French and Russian versions. Hostel names come from the Google listing his link opens.
 - `scripts/build_html.py` regenerates the page from `data/days.json`, `data/notes.json` and `data/photos.json`. From the repo root:
   `.venv/bin/python trips/camino-portugues-2026/scripts/build_html.py`
   (the venv is Python 3.13 with polyline, osxphotos, pillow, pillow-heif; recreate with
@@ -95,5 +95,5 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
 
 - Philippe's writing/communication preference: concise, opinionated, plain prose,
   no em dashes, no excessive hedging.
-- Keep the page bilingual and use the shared theme tokens; no page-specific colours.
+- Keep the page in all three languages and use the shared theme tokens; no page-specific colours.
 - Do not add a hero image or restructure the layout without asking.

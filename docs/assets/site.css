@@ -92,10 +92,10 @@ body { display: block; font-size: 1rem; line-height: 1.6; letter-spacing: normal
 main.container { overflow: visible; max-inline-size: 80rem; margin: 0 auto; padding: 0 1rem 3rem; }
 main.container.narrow { max-inline-size: 56rem; }
 
-/* Bilingual text: only the active language shows. */
+/* Text in each language (fr, en, ru): only the active language shows. */
 body [lang] { display: none; }
-body[data-lang="fr"] [lang="fr"], body[data-lang="en"] [lang="en"] { display: inline; }
-body[data-lang="fr"] div[lang="fr"], body[data-lang="en"] div[lang="en"] { display: block; }
+body[data-lang="fr"] [lang="fr"], body[data-lang="en"] [lang="en"], body[data-lang="ru"] [lang="ru"] { display: inline; }
+body[data-lang="fr"] div[lang="fr"], body[data-lang="en"] div[lang="en"], body[data-lang="ru"] div[lang="ru"] { display: block; }
 
 /* Top app bar */
 .appbar { display: block; padding: 0; border-block-end: 1px solid var(--outline-variant); margin-block-end: 2rem; }

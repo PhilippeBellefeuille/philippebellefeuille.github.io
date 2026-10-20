@@ -16,10 +16,18 @@ def fr_int(x): return f"{x:,.0f}".replace(',', '\u202f')  # French thousands sep
 def hm(s): return f"{s//3600}h{(s%3600)//60:02d}"
 tot_d=sum(d['d'] for d in days); tot_eg=sum(d['eg'] for d in days); tot_mt=sum(d['mt'] for d in days); tot_et=sum(d['et'] for d in days)
 FR_DAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']; FR_MON={10:'octobre'}
+RU_DAYS=['понедельник','вторник','среда','четверг','пятница','суббота','воскресенье']; RU_SHORT=['пн','вт','ср','чт','пт','сб','вс']
+RU_MON_GEN={10:'октября'}; RU_MON_SHORT={10:'окт.'}
+def L(fr,en,ru): return f'<span lang="fr">{fr}</span><span lang="en">{en}</span><span lang="ru">{ru}</span>'
+def num1(x): return L(f"{x:.1f}", f"{x:.1f}", f"{x:.1f}".replace('.',','))  # Russian decimal comma
+KM=L('km','km','км'); M=L('m','m','м')
+def hmL(s): return L(hm(s), hm(s), f"{s//3600} ч {(s%3600)//60:02d} мин")
 def fdate(s,lang):
+    if lang=='ru': return f"{RU_DAYS[s.weekday()]}, {s.day} {RU_MON_GEN[s.month]} {s.year}"
     if lang=='en': return s.strftime('%A %-d %B %Y')
     return f"{FR_DAYS[s.weekday()]} {s.day} {FR_MON[s.month]} {s.year}"
 def fshort(s,lang):
+    if lang=='ru': return f"{RU_SHORT[s.weekday()]}, {s.day} {RU_MON_SHORT[s.month]}"
     if lang=='en': return s.strftime('%a %-d %b')
     return f"{FR_DAYS[s.weekday()][:3]}. {s.day} oct."
 
@@ -38,11 +46,11 @@ for d in days:
     n=notes.get(str(d['day']),{})
     if n.get('en') or n.get('fr'):
         paras=lambda lang: ''.join(f'<p>{html.escape(t)}</p>' for t in n.get(lang,[]))
-        notesblk=f'<div class="notes"><div lang="fr">{paras("fr")}</div><div lang="en">{paras("en")}</div></div>'
+        notesblk=f'<div class="notes"><div lang="fr">{paras("fr")}</div><div lang="en">{paras("en")}</div><div lang="ru">{paras("ru")}</div></div>'
     else:
-        notesblk='<div class="notes empty"><span lang="fr">Notes de l’étape à venir.</span><span lang="en">Notes for this day coming soon.</span></div>'
+        notesblk='<div class="notes empty"><span lang="fr">Notes de l’étape à venir.</span><span lang="en">Notes for this day coming soon.</span><span lang="ru">Заметки об этом дне скоро появятся.</span></div>'
     h=n.get('hostel')
-    hostelblk=f'''<div class="hostel"><i aria-hidden="true">bed</i><div><div class="small-text muted upper"><span lang="fr">Où j’ai dormi</span><span lang="en">Where I slept</span></div><a class="link" href="{html.escape(h['url'])}" target="_blank" rel="noopener">{html.escape(h['name'])}<i aria-hidden="true">open_in_new</i></a></div></div>''' if h else ''
+    hostelblk=f'''<div class="hostel"><i aria-hidden="true">bed</i><div><div class="small-text muted upper"><span lang="fr">Où j’ai dormi</span><span lang="en">Where I slept</span><span lang="ru">Где я ночевал</span></div><a class="link" href="{html.escape(h['url'])}" target="_blank" rel="noopener">{html.escape(h['name'])}<i aria-hidden="true">open_in_new</i></a></div></div>''' if h else ''
     ph=[p for p in photos if p['day']==d['day']]
     if ph:
         idx=preview_idx(ph); tiles=''
@@ -52,7 +60,7 @@ for d in days:
             tiles+=f'<button class="ph" data-day="{d["day"]}" data-i="{i}" aria-label="Photo {i+1} / {len(ph)}"><img src="{p["file"]}-600.webp" width="{p["w"]*600//max(p["w"],p["h"])}" height="{p["h"]*600//max(p["w"],p["h"])}" loading="lazy" decoding="async" alt="{html.escape(d["from"])} → {html.escape(d["to"])}, photo {i+1}">{extra}</button>'
         gallery=f'<div class="gallery" aria-label="Photos · {len(ph)}">{tiles}</div>'
     else:
-        gallery='<div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>'
+        gallery='<div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span><span lang="ru">Фото этого дня скоро появятся</span></div>'
     descblk=f'<blockquote class="strava"><div class="small-text muted upper">Strava</div>{desc}</blockquote>' if d['desc'] else ''
     cards+=f"""
 <details class="day" id="day{d['day']}" data-day="{d['day']}" name="stage">
@@ -60,20 +68,20 @@ for d in days:
     <div class="dnum">{d['day']}</div>
     <div class="sumtext">
       <h2 class="dtitle">{html.escape(d['from'])} <span class="to">→</span> {html.escape(d['to'])}</h2>
-      <div class="muted when"><span lang="fr">{fshort(s,'fr')}</span><span lang="en">{fshort(s,'en')}</span> · {d['d']/1000:.1f} km · +{d['eg']:.0f} m</div>
+      <div class="muted when"><span lang="fr">{fshort(s,'fr')}</span><span lang="en">{fshort(s,'en')}</span><span lang="ru">{fshort(s,'ru')}</span> · {num1(d['d']/1000)} {KM} · +{d['eg']:.0f} {M}</div>
     </div>
     <i class="chev" aria-hidden="true">expand_more</i>
   </summary>
   <div class="dbody">
     <div class="dmeta">
-      <div class="muted when"><span lang="fr">{fdate(s,'fr')}</span><span lang="en">{fdate(s,'en')}</span> · {s.strftime('%H:%M')} – {e.strftime('%H:%M')}</div>
-      <a class="button border small strava-link" href="https://www.strava.com/activities/{d['id']}" target="_blank" rel="noopener"><span lang="fr">Voir sur Strava</span><span lang="en">View on Strava</span><i>open_in_new</i></a>
+      <div class="muted when"><span lang="fr">{fdate(s,'fr')}</span><span lang="en">{fdate(s,'en')}</span><span lang="ru">{fdate(s,'ru')}</span> · {s.strftime('%H:%M')} – {e.strftime('%H:%M')}</div>
+      <a class="button border small strava-link" href="https://www.strava.com/activities/{d['id']}" target="_blank" rel="noopener"><span lang="fr">Voir sur Strava</span><span lang="en">View on Strava</span><span lang="ru">Открыть в Strava</span><i>open_in_new</i></a>
     </div>
     <dl class="stats">
-      <div><dt><span lang="fr">Distance</span><span lang="en">Distance</span></dt><dd>{d['d']/1000:.1f} <small>km</small></dd></div>
-      <div><dt><span lang="fr">Dénivelé +</span><span lang="en">Elevation gain</span></dt><dd>{d['eg']:.0f} <small>m</small></dd></div>
-      <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span></dt><dd>{hm(d['mt'])}</dd></div>
-      <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span></dt><dd>{hm(d['et'])}</dd></div>
+      <div><dt><span lang="fr">Distance</span><span lang="en">Distance</span><span lang="ru">Дистанция</span></dt><dd>{num1(d['d']/1000)} <small>{KM}</small></dd></div>
+      <div><dt><span lang="fr">Dénivelé +</span><span lang="en">Elevation gain</span><span lang="ru">Набор высоты</span></dt><dd>{d['eg']:.0f} <small>{M}</small></dd></div>
+      <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span><span lang="ru">Время в движении</span></dt><dd>{hmL(d['mt'])}</dd></div>
+      <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span><span lang="ru">Общее время</span></dt><dd>{hmL(d['et'])}</dd></div>
     </dl>
     {gallery}
     {notesblk}
@@ -200,36 +208,37 @@ dialog#viewer::backdrop {{ background: rgb(0 0 0 / .9); }}
     <nav class="group connected" aria-label="Language">
       <button class="small" data-set-lang="fr">FR</button>
       <button class="small" data-set-lang="en">EN</button>
+      <button class="small" data-set-lang="ru">RU</button>
     </nav>
   </nav>
 </header>
 
 <main class="container">
 <section class="hero">
-  <div class="eyebrow"><span lang="fr">10 – 19 octobre 2026 · 10 étapes</span><span lang="en">10 – 19 October 2026 · 10 stages</span></div>
-  <h1><span lang="fr">Dix jours vers Saint-Jacques-de-Compostelle</span><span lang="en">Ten days to Santiago de Compostela</span></h1>
-  <p class="muted"><span lang="fr">Le Caminho Português par la côte puis le chemin central&nbsp;: départ de Matosinhos, en banlieue de Porto, le samedi 10 octobre, arrivée sur la Praza do Obradoiro le lundi 19 octobre. Chaque étape a été enregistrée sur Strava.</span><span lang="en">The Portuguese Way along the coast, then the central route: out of Matosinhos, just north of Porto, on Saturday 10 October, into the Praza do Obradoiro on Monday 19 October. Every stage was recorded on Strava.</span></p>
+  <div class="eyebrow"><span lang="fr">10 – 19 octobre 2026 · 10 étapes</span><span lang="en">10 – 19 October 2026 · 10 stages</span><span lang="ru">10–19 октября 2026 · 10 этапов</span></div>
+  <h1><span lang="fr">Dix jours vers Saint-Jacques-de-Compostelle</span><span lang="en">Ten days to Santiago de Compostela</span><span lang="ru">Десять дней до Сантьяго-де-Компостела</span></h1>
+  <p class="muted"><span lang="fr">Le Caminho Português par la côte puis le chemin central&nbsp;: départ de Matosinhos, en banlieue de Porto, le samedi 10 octobre, arrivée sur la Praza do Obradoiro le lundi 19 octobre. Chaque étape a été enregistrée sur Strava.</span><span lang="en">The Portuguese Way along the coast, then the central route: out of Matosinhos, just north of Porto, on Saturday 10 October, into the Praza do Obradoiro on Monday 19 October. Every stage was recorded on Strava.</span><span lang="ru">Португальский путь сначала вдоль побережья, затем по центральному маршруту: старт в Матозиньюше, пригороде Порту, в субботу 10 октября, финиш на площади Обрадойро в понедельник 19 октября. Каждый этап записан в Strava.</span></p>
   <dl class="totals">
-    <div><dt><span lang="fr">Distance totale</span><span lang="en">Total distance</span></dt><dd>{tot_d/1000:.1f} <small>km</small></dd></div>
-    <div><dt><span lang="fr">Dénivelé positif</span><span lang="en">Elevation gain</span></dt><dd><span lang="fr">{fr_int(tot_eg)}</span><span lang="en">{tot_eg:,.0f}</span> <small>m</small></dd></div>
-    <div><dt><span lang="fr">Temps en marche</span><span lang="en">Moving time</span></dt><dd>{hm(tot_mt)}</dd></div>
-    <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed time</span></dt><dd>{hm(tot_et)}</dd></div>
-    <div><dt><span lang="fr">Moyenne par jour</span><span lang="en">Daily average</span></dt><dd>{tot_d/1000/len(days):.1f} <small>km</small></dd></div>
-    <div><dt><span lang="fr">Plus longue étape</span><span lang="en">Longest stage</span></dt><dd>{longest['d']/1000:.1f} <small>km · <span lang="fr">jour</span><span lang="en">day</span> {longest['day']}</small></dd></div>
+    <div><dt><span lang="fr">Distance totale</span><span lang="en">Total distance</span><span lang="ru">Общая дистанция</span></dt><dd>{num1(tot_d/1000)} <small>{KM}</small></dd></div>
+    <div><dt><span lang="fr">Dénivelé positif</span><span lang="en">Elevation gain</span><span lang="ru">Набор высоты</span></dt><dd><span lang="fr">{fr_int(tot_eg)}</span><span lang="en">{tot_eg:,.0f}</span><span lang="ru">{fr_int(tot_eg)}</span> <small>{M}</small></dd></div>
+    <div><dt><span lang="fr">Temps en marche</span><span lang="en">Moving time</span><span lang="ru">Время в движении</span></dt><dd>{hmL(tot_mt)}</dd></div>
+    <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed time</span><span lang="ru">Общее время</span></dt><dd>{hmL(tot_et)}</dd></div>
+    <div><dt><span lang="fr">Moyenne par jour</span><span lang="en">Daily average</span><span lang="ru">В среднем за день</span></dt><dd>{num1(tot_d/1000/len(days))} <small>{KM}</small></dd></div>
+    <div><dt><span lang="fr">Plus longue étape</span><span lang="en">Longest stage</span><span lang="ru">Самый длинный этап</span></dt><dd>{num1(longest['d']/1000)} <small>{KM} · <span lang="fr">jour</span><span lang="en">day</span><span lang="ru">день</span> {longest['day']}</small></dd></div>
   </dl>
 </section>
 
 <div class="layout">
   <aside class="mapcol">
-    <h2 class="section"><span lang="fr">Le parcours</span><span lang="en">The route</span></h2>
+    <h2 class="section"><span lang="fr">Le parcours</span><span lang="en">The route</span><span lang="ru">Маршрут</span></h2>
     <div class="map" id="overview" role="img" aria-label="Route map, Matosinhos to Santiago de Compostela, ten stages"></div>
   </aside>
   <section class="days">
-    <h2 class="section"><span lang="fr">Étape par étape</span><span lang="en">Day by day</span></h2>
+    <h2 class="section"><span lang="fr">Étape par étape</span><span lang="en">Day by day</span><span lang="ru">День за днём</span></h2>
     {cards}
   </section>
 </div>
-<footer class="site"><span lang="fr">Distances, dénivelés et temps tels qu’enregistrés par Strava (temps en marche = sans les pauses).</span><span lang="en">Distances, elevation and times as recorded by Strava (moving time excludes breaks).</span></footer>
+<footer class="site"><span lang="fr">Distances, dénivelés et temps tels qu’enregistrés par Strava (temps en marche = sans les pauses).</span><span lang="en">Distances, elevation and times as recorded by Strava (moving time excludes breaks).</span><span lang="ru">Дистанция, набор высоты и время по данным Strava (время в движении не включает остановки).</span></footer>
 </main>
 <dialog id="viewer" aria-label="Photos">
   <div class="vbar"><span class="vcount"></span><button class="close" aria-label="Close"><i>close</i></button></div>
@@ -367,13 +376,13 @@ alignMap();
 // Photo viewer: one full-screen dialog for every day; arrows, keyboard and swipe.
 const viewer = document.getElementById('viewer'), vimg = viewer.querySelector('img');
 let vday = null, vi = 0;
-function lang() {{ return document.body.dataset.lang === 'en' ? 'en' : 'fr'; }}
+function lang() {{ return document.body.dataset.lang || 'fr'; }}
 function showPhoto(i) {{
   const list = PHOTOS[vday]; vi = (i + list.length) % list.length;
   const p = list[vi];
   vimg.src = p.f + '-1600.webp';
   vimg.alt = STAGES[vday - 1].from + ' → ' + STAGES[vday - 1].to + ', photo ' + (vi + 1);
-  viewer.querySelector('.vcount').textContent = (lang() === 'fr' ? 'Jour ' : 'Day ') + vday + ' · ' + (vi + 1) + ' / ' + list.length;
+  viewer.querySelector('.vcount').textContent = ({{ fr: 'Jour ', en: 'Day ', ru: 'День ' }}[lang()] || 'Day ') + vday + ' · ' + (vi + 1) + ' / ' + list.length;
   viewer.querySelector('.vcap').textContent = (p.c && p.c[lang()]) || '';
   [vi + 1, vi - 1].forEach(j => {{ const q = list[(j + list.length) % list.length]; new Image().src = q.f + '-1600.webp'; }});
 }}

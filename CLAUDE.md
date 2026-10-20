@@ -16,11 +16,18 @@ hand-written or script-generated static HTML, no framework, no Jekyll.
 
 ## Conventions
 
-- Bilingual FR/EN. Each text has `<span lang="fr">` and `<span lang="en">` (or `<div lang>`
-  for block content). `site.js` picks the language: `?lang=fr|en` in the URL, else the
-  last FR/EN button choice (`localStorage('lang')`, shared across pages), else the
-  browser language (fr* → FR, anything else → EN). Clicking FR/EN also writes `?lang=` into
-  the address bar so copied links keep the language. Pages that rewrite the URL (the
+- Three languages: French, English, Russian (RU added 20 Oct 2026). Every text has
+  `<span lang="fr">`, `<span lang="en">` and `<span lang="ru">` (or `<div lang>` for block
+  content); the trip build has an `L(fr, en, ru)` helper. `site.js` picks the language:
+  `?lang=fr|en|ru` in the URL, else the last button choice (`localStorage('lang')`, shared
+  across pages), else the browser language (fr*/ru* → that, anything else → EN). Clicking
+  a language button writes `?lang=` into the address bar so copied links keep it.
+- Russian conventions: decimal comma (37,0 км), units км/м, durations "7 ч 29 мин", dates
+  "суббота, 10 октября 2026". Stage headings, map labels and hostel names keep their
+  original Latin spelling; Russian prose uses Russian place-name forms (Матозиньюш,
+  Понте-де-Лима, Сантьяго-де-Компостела…). Russian first-person past tense is gendered; the notes use masculine forms
+  ("я шёл", "я работал"), confirmed by Philippe on 20 Oct 2026.
+  Short Strava comments stay untranslated in all languages. Pages that rewrite the URL (the
   trip page sets `#dayN`) must keep `location.search`.
 - Analytics: GoatCounter (philippebellefeuille.goatcounter.com), loaded from `site.js` so
   every page is covered. Counts by `location.pathname` only (so `?lang=` doesn't split
