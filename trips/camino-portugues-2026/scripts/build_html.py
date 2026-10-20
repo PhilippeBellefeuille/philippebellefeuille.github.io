@@ -3,6 +3,7 @@ TRIP=pathlib.Path(__file__).resolve().parent.parent
 OUT=TRIP.parent.parent/'docs'/'trips'/TRIP.name/'index.html'
 days=json.load(open(TRIP/'data/days.json'))
 notes=json.load(open(TRIP/'data/notes.json'))  # Philippe's own text per day, FR + EN, and where he slept
+def fr_int(x): return f"{x:,.0f}".replace(',', '\u202f')  # French thousands separator: narrow no-break space
 def hm(s): return f"{s//3600}h{(s%3600)//60:02d}"
 tot_d=sum(d['d'] for d in days); tot_eg=sum(d['eg'] for d in days); tot_mt=sum(d['mt'] for d in days); tot_et=sum(d['et'] for d in days)
 FR_DAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']; FR_MON={10:'octobre'}
@@ -76,7 +77,7 @@ page=f"""<!doctype html>
 .eyebrow {{ color: var(--primary); font-size: .875rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }}
 .hero h1 {{ font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; line-height: 1.15; margin: .5rem 0 1rem; text-wrap: balance; }}
 .hero p {{ max-inline-size: 62ch; font-size: 1.125rem; }}
-.totals {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: .75rem; margin-block-start: 2rem; }}
+.totals {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-block-start: 2rem; }}
 .totals > div {{ background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: .75rem; padding: 1rem; }}
 .totals dt, .stats dt {{ font-size: .75rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--on-surface-variant); }}
 .totals dd {{ font-size: 1.75rem; line-height: 1.2; margin-block-start: .25rem; font-variant-numeric: tabular-nums; }}
@@ -84,8 +85,7 @@ page=f"""<!doctype html>
 .layout {{ display: grid; grid-template-columns: minmax(18rem, 26rem) 1fr; gap: 2.5rem; margin-block-start: 2.5rem; align-items: start; }}
 .mapcol {{ position: sticky; top: 1rem; }}
 h2.section {{ font-size: 1.375rem; font-weight: 400; margin-block-end: .75rem; }}
-.legend {{ font-size: .8125rem; margin-block-start: .5rem; }}
-.days {{ min-inline-size: 0; }}
+.days {{ min-inline-size: 0; margin: 0 !important; }}  /* Beer gives a section after a sibling a 1rem top margin (high-specificity rule); it pushed the day list below the map */
 
 /* Maps (Leaflet). Beer CSS sets border-radius:inherit on everything, which would round every tile. */
 .map {{ border: 1px solid var(--outline-variant); border-radius: .75rem; overflow: hidden; background: var(--surface-container-low); z-index: 0; }}
@@ -113,6 +113,7 @@ h2.section {{ font-size: 1.375rem; font-weight: 400; margin-block-end: .75rem; }
 /* Stage cards: native <details>, one open at a time (name="stage"). */
 details.day {{ background: var(--card); border: 1px solid var(--outline-variant); border-radius: .75rem; margin-block-end: .75rem; scroll-margin-top: 1rem; transition: border-color .2s; }}
 details.day[open] {{ border-color: var(--outline); }}
+details.day:last-child {{ margin-block-end: 0; }}  /* the pinned map stops at the list's end; no trailing gap */
 details.day > summary {{ display: flex; gap: 1rem; align-items: center; padding: 1rem 1.25rem; border-radius: .75rem; }}
 details.day > summary:hover {{ background: var(--surface-container-low); }}
 .sumtext {{ flex: 1; min-inline-size: 0; }}
@@ -138,6 +139,7 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
 .hostel a {{ display: inline; font-weight: 500; }}
 .hostel a i {{ --_size: 1rem; display: inline-flex; vertical-align: -.125rem; margin-inline-start: .25rem; }}
 .photos {{ margin-block-start: 1rem; aspect-ratio: 3/1; display: grid; place-items: center; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .875rem; background: var(--surface-container-low); }}
+@media (max-width: 600px) {{ .totals {{ grid-template-columns: repeat(2, 1fr); }} .totals dd {{ font-size: 1.5rem; }} }}
 @media (max-width: 820px) {{
   .layout {{ grid-template-columns: 1fr; gap: 2rem; }}
   .mapcol {{ position: static; }}
@@ -169,7 +171,7 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
   <p class="muted"><span lang="fr">Le Caminho Português par la côte puis le chemin central&nbsp;: départ de Matosinhos, en banlieue de Porto, le samedi 10 octobre, arrivée sur la Praza do Obradoiro le lundi 19 octobre. Chaque étape a été enregistrée sur Strava.</span><span lang="en">The Portuguese Way along the coast, then the central route: out of Matosinhos, just north of Porto, on Saturday 10 October, into the Praza do Obradoiro on Monday 19 October. Every stage was recorded on Strava.</span></p>
   <dl class="totals">
     <div><dt><span lang="fr">Distance totale</span><span lang="en">Total distance</span></dt><dd>{tot_d/1000:.1f} <small>km</small></dd></div>
-    <div><dt><span lang="fr">Dénivelé positif</span><span lang="en">Elevation gain</span></dt><dd>{tot_eg:,.0f} <small>m</small></dd></div>
+    <div><dt><span lang="fr">Dénivelé positif</span><span lang="en">Elevation gain</span></dt><dd><span lang="fr">{fr_int(tot_eg)}</span><span lang="en">{tot_eg:,.0f}</span> <small>m</small></dd></div>
     <div><dt><span lang="fr">Temps en marche</span><span lang="en">Moving time</span></dt><dd>{hm(tot_mt)}</dd></div>
     <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed time</span></dt><dd>{hm(tot_et)}</dd></div>
     <div><dt><span lang="fr">Moyenne par jour</span><span lang="en">Daily average</span></dt><dd>{tot_d/1000/len(days):.1f} <small>km</small></dd></div>
@@ -181,7 +183,6 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
   <aside class="mapcol">
     <h2 class="section"><span lang="fr">Le parcours</span><span lang="en">The route</span></h2>
     <div class="map" id="overview" role="img" aria-label="Route map, Matosinhos to Santiago de Compostela, ten stages"></div>
-    <p class="legend muted"><span lang="fr">Cliquez sur une étape pour l’ouvrir. Tracés GPS Strava.</span><span lang="en">Click a stage to open it. GPS tracks from Strava.</span></p>
   </aside>
   <section class="days">
     <h2 class="section"><span lang="fr">Étape par étape</span><span lang="en">Day by day</span></h2>
@@ -283,8 +284,37 @@ function onOpen(el) {{
 }}
 document.querySelectorAll('details.day').forEach(el => el.addEventListener('toggle', () => {{
   if (el.open) onOpen(el);
-  else if (!document.querySelector('details.day[open]')) {{ highlight(null); history.replaceState(null, '', location.pathname); }}
+  else if (!document.querySelector('details.day[open]')) {{ highlight(null); history.replaceState(null, '', location.pathname + location.search); }}
 }}));
+
+// Desktop: the overview map is as tall as the day list (every day collapsed) so both columns
+// line up, but never taller than the window, so the pinned map is always fully visible.
+// When the list is taller than the window, the tops line up at the start and the pinned map
+// comes to rest with its bottom on the last day at the end. A ResizeObserver re-measures whenever the list or layout changes
+// size: window resize, fonts or icons finishing loading, FR/EN switch, scrollbar appearing.
+const wide = window.matchMedia('(min-width: 821px)');
+const STICKY_TOP = 16;  // matches .mapcol {{ top: 1rem }}
+function alignMap() {{
+  const ov = document.getElementById('overview');
+  if (!wide.matches) {{ if (ov.style.height) {{ ov.style.height = ''; overview.invalidateSize(); }} return; }}
+  const cards = [...document.querySelectorAll('details.day')];
+  let openExtra = 0;
+  cards.forEach(c => {{
+    if (c.open) openExtra += c.getBoundingClientRect().height - c.querySelector('summary').getBoundingClientRect().height - 2;
+  }});
+  const daysTop = document.querySelector('.days').getBoundingClientRect().top;
+  const listBottom = cards[cards.length - 1].getBoundingClientRect().bottom - daysTop - openExtra;
+  const ovOffset = ov.getBoundingClientRect().top - document.querySelector('.mapcol').getBoundingClientRect().top;
+  const fitsWindow = innerHeight - ovOffset - 2 * STICKY_TOP;
+  const h = Math.max(320, Math.min(listBottom - ovOffset, fitsWindow));
+  if (Math.abs(ov.getBoundingClientRect().height - h) > 0.5) {{ ov.style.height = h + 'px'; overview.invalidateSize(); fitAll(); }}
+}}
+const ro = new ResizeObserver(() => requestAnimationFrame(alignMap));
+ro.observe(document.querySelector('.days'));
+ro.observe(document.querySelector('.layout'));
+wide.addEventListener('change', alignMap);
+window.addEventListener('resize', alignMap);  // window height changes don't resize the list
+alignMap();
 
 const m = location.hash.match(/^#day(\\d+)$/);
 if (m && card(+m[1])) openStage(+m[1], true);

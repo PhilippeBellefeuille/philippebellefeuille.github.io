@@ -82,9 +82,11 @@ body.dark {
   --surface-container-highest: #3f4144;
 }
 
-body { font-size: 1rem; line-height: 1.6; letter-spacing: normal; }
-main.container { overflow: visible; max-inline-size: 72rem; margin: 0 auto; padding: 0 1rem 3rem; }
-main.container.narrow { max-inline-size: 48rem; }
+/* Beer CSS makes body a grid whose content column sizes to its text, so page width
+   changed with the language. A plain block keeps the width fixed. */
+body { display: block; font-size: 1rem; line-height: 1.6; letter-spacing: normal; }
+main.container { overflow: visible; max-inline-size: 80rem; margin: 0 auto; padding: 0 1rem 3rem; }
+main.container.narrow { max-inline-size: 56rem; }
 
 /* Bilingual text: only the active language shows. */
 body [lang] { display: none; }
@@ -93,8 +95,8 @@ body[data-lang="fr"] div[lang="fr"], body[data-lang="en"] div[lang="en"] { displ
 
 /* Top app bar */
 .appbar { display: block; padding: 0; border-block-end: 1px solid var(--outline-variant); margin-block-end: 2rem; }
-.appbar > nav { min-block-size: 4rem; max-inline-size: 72rem; margin: 0 auto; padding: 0 1rem; }
-.appbar.narrow > nav { max-inline-size: 48rem; }
+.appbar > nav { min-block-size: 4rem; max-inline-size: 80rem; margin: 0 auto; padding: 0 1rem; }
+.appbar.narrow > nav { max-inline-size: 56rem; }
 .appbar a.brand { font-weight: 500; font-size: 1.125rem; text-decoration: none; }
 .appbar .crumb { color: var(--on-surface-variant); }
 .appbar .spacer { flex: 1; }

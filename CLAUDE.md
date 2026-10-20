@@ -16,9 +16,13 @@ hand-written or script-generated static HTML, no framework, no Jekyll.
 
 ## Conventions
 
-- Bilingual FR/EN, FR default. Each text has `<span lang="fr">` and `<span lang="en">`;
-  a toggle sets `body[data-lang]` and stores the choice in `localStorage('lang')`, shared
-  across pages. Hide rule must be `body [lang]{display:none}` (not bare `[lang]`, which
+- Bilingual FR/EN. Each text has `<span lang="fr">` and `<span lang="en">` (or `<div lang>`
+  for block content). `site.js` picks the language: `?lang=fr|en` in the URL, else the
+  last FR/EN button choice (`localStorage('lang')`, shared across pages), else the
+  browser language (fr* → FR, anything else → EN). Clicking FR/EN also writes `?lang=` into
+  the address bar so copied links keep the language. Pages that rewrite the URL (the
+  trip page sets `#dayN`) must keep `location.search`.
+- French numbers: thousands separator is a narrow no-break space (`fr_int` in the build). Hide rule must be `body [lang]{display:none}` (not bare `[lang]`, which
   would hide `<html lang>`).
 - Material Design 3 via Beer CSS (`beercss@5.0.3` from jsdelivr, CSS only, no beer.js),
   Roboto from Google Fonts. Neutral grey surfaces, muted slate-blue primary.
@@ -29,7 +33,10 @@ hand-written or script-generated static HTML, no framework, no Jekyll.
 - Beer CSS claims many short class names and restyles bare elements. Before adding a
   class, check it isn't a Beer class: known traps are `.page` (hidden, used for page
   transitions), `.border`, `.top`/`.left`, `.grid`, `.wrap`, `.arrow`, `.overline`.
-  Beer makes `body` and `header` CSS grids, hence `.appbar{display:block}`.
+  Beer also adds `margin-block-start: 1rem` to any section/heading/paragraph that
+  follows a sibling, with a selector strong enough to need `!important` to undo.
+  Beer makes `body` and `header` CSS grids; both are reset to `display:block` (the body
+  grid sized the page to its text, so the width changed between FR and EN).
 - Images: max ~1600px wide, WebP or JPEG, with `loading="lazy"` and `alt` text.
 - Philippe's writing preference: concise, opinionated, plain prose, no em dashes.
 

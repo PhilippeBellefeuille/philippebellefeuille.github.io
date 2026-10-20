@@ -24,6 +24,11 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
   - Stage cards are `<details name="stage">` (one open at a time). Opening one builds its
     own map lazily, highlights it on the overview and sets `#dayN`; loading the page
     with `#dayN` opens that stage.
+  - On desktop, `alignMap()` sizes the overview to the day list's height with every day
+    collapsed, capped at the window height so the pinned (sticky) map is always fully
+    visible. Philippe wants both: columns lined up and the whole map visible while
+    scrolling. If the list is taller than the window, tops align at the start and the
+    sticky map's bottom meets the last day at the end. No caption under the map.
   - Leaflet gotchas: set a view (`fitBounds`) before adding vector layers or it throws
     "reading 'min'"; Beer's `* {border-radius: inherit}` is reset inside `.map`.
   - Full-resolution tracks (`get_activity_streams`, ~1000 points per stage) were tried but
