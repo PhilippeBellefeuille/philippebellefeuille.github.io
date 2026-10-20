@@ -33,7 +33,13 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
   activity id, stage endpoints (`from`/`to`), description, local start time,
   distance (m), moving/elapsed time (s), elevation gain (m), calories, and the
   reduced encoded polyline from Strava.
-- `scripts/build_html.py` regenerates the page from `data/days.json`. From the repo root:
+- `data/notes.json` holds Philippe's own content per day (keyed by day number):
+  `fr` and `en` arrays of paragraphs, and `hostel` {name, url} with his Google Maps link.
+  Rendered in each stage card as the notes text and a "Où j’ai dormi / Where I slept"
+  row; days without notes show a "coming soon" line, days without a hostel show nothing.
+  He writes in English; edit lightly (spelling, place names, flow) keeping his voice,
+  and write the French version. Hostel names come from the Google listing his link opens.
+- `scripts/build_html.py` regenerates the page from `data/days.json` and `data/notes.json`. From the repo root:
   `.venv/bin/python trips/camino-portugues-2026/scripts/build_html.py`
   (the venv has `polyline`; recreate with `python3 -m venv .venv && .venv/bin/pip install polyline`).
 - Moved from the Cowork zip into this repo on 20 Oct 2026. Changes made then: full HTML
@@ -60,10 +66,7 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
    library. Each day card has an empty `.photos` placeholder; replace it with
    an image strip. Put images in `docs/trips/camino-portugues-2026/img/`. Keep images optimised (max ~1600px wide, WebP or JPEG).
    Activity URLs: https://www.strava.com/activities/<id> with ids in days.json.
-2. Philippe's own notes per day. Each day card has a `.notes` placeholder.
-   He'll supply the text; the page is bilingual, so add both FR and EN
-   (`<span lang="fr">` / `<span lang="en">`), translating whichever side he
-   doesn't provide.
+2. Philippe's own notes per day, in `data/notes.json`. Done: all 10 days (day 10's "hostel" is the Porto hotel after the bus back).
 3. Possibly a per-day elevation profile (Strava altitude streams are available
    through the MCP `get_activity_streams` tool if a Strava connector is present).
 

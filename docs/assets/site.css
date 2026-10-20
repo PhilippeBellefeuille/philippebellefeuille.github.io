@@ -89,6 +89,7 @@ main.container.narrow { max-inline-size: 48rem; }
 /* Bilingual text: only the active language shows. */
 body [lang] { display: none; }
 body[data-lang="fr"] [lang="fr"], body[data-lang="en"] [lang="en"] { display: inline; }
+body[data-lang="fr"] div[lang="fr"], body[data-lang="en"] div[lang="en"] { display: block; }
 
 /* Top app bar */
 .appbar { display: block; padding: 0; border-block-end: 1px solid var(--outline-variant); margin-block-end: 2rem; }

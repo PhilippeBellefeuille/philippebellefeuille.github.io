@@ -2,6 +2,7 @@ import json, datetime as dt, html, pathlib, polyline
 TRIP=pathlib.Path(__file__).resolve().parent.parent
 OUT=TRIP.parent.parent/'docs'/'trips'/TRIP.name/'index.html'
 days=json.load(open(TRIP/'data/days.json'))
+notes=json.load(open(TRIP/'data/notes.json'))  # Philippe's own text per day, FR + EN, and where he slept
 def hm(s): return f"{s//3600}h{(s%3600)//60:02d}"
 tot_d=sum(d['d'] for d in days); tot_eg=sum(d['eg'] for d in days); tot_mt=sum(d['mt'] for d in days); tot_et=sum(d['et'] for d in days)
 FR_DAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']; FR_MON={10:'octobre'}
@@ -21,6 +22,14 @@ cards=''
 for d in days:
     s=dt.datetime.fromisoformat(d['start']); e=s+dt.timedelta(seconds=d['et'])
     desc=html.escape(d['desc']).replace('\n','<br>')
+    n=notes.get(str(d['day']),{})
+    if n.get('en') or n.get('fr'):
+        paras=lambda lang: ''.join(f'<p>{html.escape(t)}</p>' for t in n.get(lang,[]))
+        notesblk=f'<div class="notes"><div lang="fr">{paras("fr")}</div><div lang="en">{paras("en")}</div></div>'
+    else:
+        notesblk='<div class="notes empty"><span lang="fr">Notes de l’étape à venir.</span><span lang="en">Notes for this day coming soon.</span></div>'
+    h=n.get('hostel')
+    hostelblk=f'''<div class="hostel"><i aria-hidden="true">bed</i><div><div class="small-text muted upper"><span lang="fr">Où j’ai dormi</span><span lang="en">Where I slept</span></div><a class="link" href="{html.escape(h['url'])}" target="_blank" rel="noopener">{html.escape(h['name'])}<i aria-hidden="true">open_in_new</i></a></div></div>''' if h else ''
     descblk=f'<blockquote class="strava"><div class="small-text muted upper">Strava</div>{desc}</blockquote>' if d['desc'] else ''
     cards+=f"""
 <details class="day" id="day{d['day']}" data-day="{d['day']}" name="stage">
@@ -43,9 +52,10 @@ for d in days:
       <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span></dt><dd>{hm(d['mt'])}</dd></div>
       <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span></dt><dd>{hm(d['et'])}</dd></div>
     </dl>
+    {notesblk}
+    {hostelblk}
     <div class="map stage-map" data-day="{d['day']}" role="img" aria-label="Map of stage {d['day']}, {html.escape(d['from'])} to {html.escape(d['to'])}"></div>
     {descblk}
-    <div class="notes"><span lang="fr">Vos notes pour cette étape viendront ici.</span><span lang="en">Your own notes for this day will go here.</span></div>
     <div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>
   </div>
 </details>"""
@@ -120,7 +130,13 @@ details[open] > summary .chev {{ transform: rotate(180deg); }}
 .stats dd {{ font-size: 1.25rem; font-variant-numeric: tabular-nums; }}
 blockquote.strava {{ margin-block-start: 1.25rem; background: var(--surface-container-low); font-style: italic; }}
 blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-block-end: .25rem; }}
-.notes {{ margin-block-start: 1rem; padding: .75rem 1rem; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .9375rem; }}
+.notes {{ margin-block-start: 1.25rem; max-inline-size: 68ch; }}
+.notes p {{ margin: 0 0 .75rem; }}
+.notes.empty {{ padding: .75rem 1rem; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .9375rem; }}
+.hostel {{ display: flex; gap: .75rem; align-items: center; margin-block-start: 1rem; padding: .75rem 1rem; background: var(--surface-container-low); border-radius: .5rem; }}
+.hostel > i {{ color: var(--primary); }}
+.hostel a {{ display: inline; font-weight: 500; }}
+.hostel a i {{ --_size: 1rem; display: inline-flex; vertical-align: -.125rem; margin-inline-start: .25rem; }}
 .photos {{ margin-block-start: 1rem; aspect-ratio: 3/1; display: grid; place-items: center; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .875rem; background: var(--surface-container-low); }}
 @media (max-width: 820px) {{
   .layout {{ grid-template-columns: 1fr; gap: 2rem; }}
