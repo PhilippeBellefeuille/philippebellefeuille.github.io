@@ -3,6 +3,15 @@ TRIP=pathlib.Path(__file__).resolve().parent.parent
 OUT=TRIP.parent.parent/'docs'/'trips'/TRIP.name/'index.html'
 days=json.load(open(TRIP/'data/days.json'))
 notes=json.load(open(TRIP/'data/notes.json'))  # Philippe's own text per day, FR + EN, and where he slept
+photos_path=TRIP/'data/photos.json'  # written by scripts/photos.py from the Apple Photos export
+photos=json.load(open(photos_path)) if photos_path.exists() else []
+PREVIEW=6  # photos shown in each day card; the viewer shows them all
+def preview_idx(ph):
+    # Featured photos first (in time order); otherwise spread evenly from morning to evening.
+    feat=[i for i,p in enumerate(ph) if p.get('featured')]
+    if feat: return feat[:PREVIEW]
+    if len(ph)<=PREVIEW: return list(range(len(ph)))
+    return sorted({round(k*(len(ph)-1)/(PREVIEW-1)) for k in range(PREVIEW)})
 def fr_int(x): return f"{x:,.0f}".replace(',', '\u202f')  # French thousands separator: narrow no-break space
 def hm(s): return f"{s//3600}h{(s%3600)//60:02d}"
 tot_d=sum(d['d'] for d in days); tot_eg=sum(d['eg'] for d in days); tot_mt=sum(d['mt'] for d in days); tot_et=sum(d['et'] for d in days)
@@ -18,6 +27,9 @@ def fshort(s,lang):
 stages=[{'day':d['day'],'from':d['from'],'to':d['to'],'km':round(d['d']/1000,1),
          'line':[[round(a,5),round(b,5)] for a,b in polyline.decode(d['pl'])]} for d in days]
 stages_json=json.dumps(stages,ensure_ascii=False,separators=(',',':'))
+photos_by_day={}
+for p in photos: photos_by_day.setdefault(p['day'],[]).append({'f':p['file'],'c':p.get('caption') or {}})
+photos_json=json.dumps(photos_by_day,ensure_ascii=False,separators=(',',':'))
 
 cards=''
 for d in days:
@@ -31,6 +43,16 @@ for d in days:
         notesblk='<div class="notes empty"><span lang="fr">Notes de l’étape à venir.</span><span lang="en">Notes for this day coming soon.</span></div>'
     h=n.get('hostel')
     hostelblk=f'''<div class="hostel"><i aria-hidden="true">bed</i><div><div class="small-text muted upper"><span lang="fr">Où j’ai dormi</span><span lang="en">Where I slept</span></div><a class="link" href="{html.escape(h['url'])}" target="_blank" rel="noopener">{html.escape(h['name'])}<i aria-hidden="true">open_in_new</i></a></div></div>''' if h else ''
+    ph=[p for p in photos if p['day']==d['day']]
+    if ph:
+        idx=preview_idx(ph); tiles=''
+        for k,i in enumerate(idx):
+            p=ph[i]; more=len(ph)-len(idx)
+            extra=f'<span class="more">+{more}</span>' if k==len(idx)-1 and more>0 else ''
+            tiles+=f'<button class="ph" data-day="{d["day"]}" data-i="{i}" aria-label="Photo {i+1} / {len(ph)}"><img src="{p["file"]}-600.webp" width="{p["w"]*600//max(p["w"],p["h"])}" height="{p["h"]*600//max(p["w"],p["h"])}" loading="lazy" decoding="async" alt="{html.escape(d["from"])} → {html.escape(d["to"])}, photo {i+1}">{extra}</button>'
+        gallery=f'<div class="gallery" aria-label="Photos · {len(ph)}">{tiles}</div>'
+    else:
+        gallery='<div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>'
     descblk=f'<blockquote class="strava"><div class="small-text muted upper">Strava</div>{desc}</blockquote>' if d['desc'] else ''
     cards+=f"""
 <details class="day" id="day{d['day']}" data-day="{d['day']}" name="stage">
@@ -53,11 +75,11 @@ for d in days:
       <div><dt><span lang="fr">En marche</span><span lang="en">Moving time</span></dt><dd>{hm(d['mt'])}</dd></div>
       <div><dt><span lang="fr">Durée totale</span><span lang="en">Elapsed</span></dt><dd>{hm(d['et'])}</dd></div>
     </dl>
+    {gallery}
     {notesblk}
     {hostelblk}
     <div class="map stage-map" data-day="{d['day']}" role="img" aria-label="Map of stage {d['day']}, {html.escape(d['from'])} to {html.escape(d['to'])}"></div>
     {descblk}
-    <div class="photos"><span lang="fr">Photos de l’étape à venir</span><span lang="en">Photos for this day coming soon</span></div>
   </div>
 </details>"""
 longest=max(days,key=lambda d:d['d'])
@@ -138,6 +160,22 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
 .hostel > i {{ color: var(--primary); }}
 .hostel a {{ display: inline; font-weight: 500; }}
 .hostel a i {{ --_size: 1rem; display: inline-flex; vertical-align: -.125rem; margin-inline-start: .25rem; }}
+.gallery {{ display: grid; grid-template-columns: repeat(6, 1fr); gap: .375rem; margin-block-start: 1.25rem; }}
+.gallery .ph {{ position: relative; display: block; padding: 0; margin: 0; border: 0; inline-size: 100%; block-size: auto; min-inline-size: 0; min-block-size: 0; aspect-ratio: 1;  /* undo Beer's fixed button size */ overflow: hidden; border-radius: .375rem; background: var(--surface-container-high); cursor: zoom-in; }}
+.gallery .ph img {{ position: absolute; inset: 0; width: 100% !important; height: 100% !important; min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important; margin: 0; padding: 0; border-radius: 0; object-fit: cover; display: block; transition: transform .3s; }}  /* Beer shrinks images inside buttons to icon size */
+.gallery .ph:hover img {{ transform: scale(1.04); }}
+.gallery .more {{ position: absolute; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / .5); color: #fff; font-size: 1.125rem; font-weight: 500; }}
+/* Full-screen viewer */
+dialog#viewer {{ position: fixed; inset: 0; transform: none !important; max-inline-size: none; max-block-size: none; min-inline-size: 0; inline-size: auto; block-size: auto; overflow: hidden; margin: 0; padding: 0; border: 0; border-radius: 0;  /* Beer centres dialogs with translateX(-50%) */ background: rgb(0 0 0 / .94); color: #fff; inset: 0; }}
+dialog#viewer::backdrop {{ background: rgb(0 0 0 / .9); }}
+#viewer figure {{ position: absolute; inset: 3.5rem 0 4.5rem; display: grid; place-items: center; margin: 0; }}
+#viewer img {{ position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; object-fit: contain;  /* whole photo, portrait or landscape */ user-select: none; -webkit-user-drag: none; border-radius: 0; }}
+#viewer .vbar {{ position: absolute; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: .5rem 1rem; font-size: .875rem; color: rgb(255 255 255 / .8); }}
+#viewer .vcap {{ position: absolute; inset: auto 0 0; padding: 1rem; text-align: center; font-size: .9375rem; min-block-size: 4.5rem; color: rgb(255 255 255 / .9); }}
+#viewer button {{ background: rgb(255 255 255 / .12); color: #fff; border: 0; border-radius: 50%; inline-size: 2.75rem; block-size: 2.75rem; cursor: pointer; display: grid; place-items: center; }}
+#viewer button:hover {{ background: rgb(255 255 255 / .22); }}
+#viewer .prev, #viewer .next {{ position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; }}
+#viewer .prev {{ left: 1rem; }} #viewer .next {{ right: 1rem; }}
 .photos {{ margin-block-start: 1rem; aspect-ratio: 3/1; display: grid; place-items: center; border: 1px dashed var(--outline-variant); border-radius: .5rem; color: var(--on-surface-variant); font-size: .875rem; background: var(--surface-container-low); }}
 @media (max-width: 600px) {{ .totals {{ grid-template-columns: repeat(2, 1fr); }} .totals dd {{ font-size: 1.5rem; }} }}
 @media (max-width: 820px) {{
@@ -145,6 +183,8 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
   .mapcol {{ position: static; }}
   #overview {{ block-size: 60vh; }}
   .stats {{ grid-template-columns: repeat(2, 1fr); }}
+  .gallery {{ grid-template-columns: repeat(3, 1fr); }}
+  #viewer .prev, #viewer .next {{ display: none; }}  /* swipe on phones */
   .stage-map {{ block-size: 16rem; }}
   details.day > summary {{ padding: .875rem 1rem; gap: .75rem; }}
   .dbody {{ padding: 0 1rem 1rem; }}
@@ -191,10 +231,18 @@ blockquote.strava .upper {{ font-style: normal; letter-spacing: .1em; margin-blo
 </div>
 <footer class="site"><span lang="fr">Distances, dénivelés et temps tels qu’enregistrés par Strava (temps en marche = sans les pauses).</span><span lang="en">Distances, elevation and times as recorded by Strava (moving time excludes breaks).</span></footer>
 </main>
+<dialog id="viewer" aria-label="Photos">
+  <div class="vbar"><span class="vcount"></span><button class="close" aria-label="Close"><i>close</i></button></div>
+  <button class="prev" aria-label="Previous"><i>chevron_left</i></button>
+  <figure><img alt=""></figure>
+  <button class="next" aria-label="Next"><i>chevron_right</i></button>
+  <div class="vcap"></div>
+</dialog>
 <script src="../../assets/site.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const STAGES = {stages_json};
+const PHOTOS = {photos_json};
 const dark = window.matchMedia('(prefers-color-scheme: dark)');
 // Esri grey canvas basemaps: neutral, keyless, with a separate label layer on top.
 const esri = layer => 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' + layer + '/MapServer/tile/{{z}}/{{y}}/{{x}}';
@@ -315,6 +363,30 @@ ro.observe(document.querySelector('.layout'));
 wide.addEventListener('change', alignMap);
 window.addEventListener('resize', alignMap);  // window height changes don't resize the list
 alignMap();
+
+// Photo viewer: one full-screen dialog for every day; arrows, keyboard and swipe.
+const viewer = document.getElementById('viewer'), vimg = viewer.querySelector('img');
+let vday = null, vi = 0;
+function lang() {{ return document.body.dataset.lang === 'en' ? 'en' : 'fr'; }}
+function showPhoto(i) {{
+  const list = PHOTOS[vday]; vi = (i + list.length) % list.length;
+  const p = list[vi];
+  vimg.src = p.f + '-1600.webp';
+  vimg.alt = STAGES[vday - 1].from + ' → ' + STAGES[vday - 1].to + ', photo ' + (vi + 1);
+  viewer.querySelector('.vcount').textContent = (lang() === 'fr' ? 'Jour ' : 'Day ') + vday + ' · ' + (vi + 1) + ' / ' + list.length;
+  viewer.querySelector('.vcap').textContent = (p.c && p.c[lang()]) || '';
+  [vi + 1, vi - 1].forEach(j => {{ const q = list[(j + list.length) % list.length]; new Image().src = q.f + '-1600.webp'; }});
+}}
+function openViewer(day, i) {{ vday = day; showPhoto(i); viewer.showModal(); }}
+document.querySelectorAll('.gallery .ph').forEach(b => b.addEventListener('click', () => openViewer(+b.dataset.day, +b.dataset.i)));
+viewer.querySelector('.prev').addEventListener('click', () => showPhoto(vi - 1));
+viewer.querySelector('.next').addEventListener('click', () => showPhoto(vi + 1));
+viewer.querySelector('.close').addEventListener('click', () => viewer.close());
+viewer.addEventListener('click', e => {{ if (e.target === viewer || e.target.tagName === 'FIGURE') viewer.close(); }});
+viewer.addEventListener('keydown', e => {{ if (e.key === 'ArrowRight') showPhoto(vi + 1); if (e.key === 'ArrowLeft') showPhoto(vi - 1); }});
+let x0 = null;
+viewer.addEventListener('pointerdown', e => {{ x0 = e.clientX; }});
+viewer.addEventListener('pointerup', e => {{ if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 50) showPhoto(vi + (dx < 0 ? 1 : -1)); }});
 
 const m = location.hash.match(/^#day(\\d+)$/);
 if (m && card(+m[1])) openStage(+m[1], true);

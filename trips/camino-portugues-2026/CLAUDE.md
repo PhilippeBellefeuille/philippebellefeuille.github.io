@@ -44,9 +44,10 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
   row; days without notes show a "coming soon" line, days without a hostel show nothing.
   He writes in English; edit lightly (spelling, place names, flow) keeping his voice,
   and write the French version. Hostel names come from the Google listing his link opens.
-- `scripts/build_html.py` regenerates the page from `data/days.json` and `data/notes.json`. From the repo root:
+- `scripts/build_html.py` regenerates the page from `data/days.json`, `data/notes.json` and `data/photos.json`. From the repo root:
   `.venv/bin/python trips/camino-portugues-2026/scripts/build_html.py`
-  (the venv has `polyline`; recreate with `python3 -m venv .venv && .venv/bin/pip install polyline`).
+  (the venv is Python 3.13 with polyline, osxphotos, pillow, pillow-heif; recreate with
+  `/opt/homebrew/bin/python3.13 -m venv .venv && .venv/bin/pip install polyline osxphotos pillow pillow-heif`).
 - Moved from the Cowork zip into this repo on 20 Oct 2026. Changes made then: full HTML
   document wrapper (doctype, head, charset, viewport, description), a home link in the
   top bar, and `[lang]{display:none}` scoped to `body [lang]` so `<html lang>` works.
@@ -66,11 +67,26 @@ Paths below are relative to this folder (`trips/camino-portugues-2026/`) unless 
 
 ## What is left to do
 
-1. Photos per day. Strava's API/MCP does not expose activity photos, so they
-   have to come from the activity pages (logged in) or from Philippe's own
-   library. Each day card has an empty `.photos` placeholder; replace it with
-   an image strip. Put images in `docs/trips/camino-portugues-2026/img/`. Keep images optimised (max ~1600px wide, WebP or JPEG).
-   Activity URLs: https://www.strava.com/activities/<id> with ids in days.json.
+1. Photos per day (pipeline built 20 Oct 2026; export from Photos in progress, 336 items).
+   - Source: Apple Photos album "Camino Portugese 2026". Reading the library directly
+     (osxphotos) fails: Claude Code's commands run under a helper app
+     (~/Library/Application Support/Claude/claude-code/<version>/…/claude.app) that macOS
+     treats separately for Full Disk Access. So Philippe exports from Photos instead
+     (File → Export, JPEG, full size, location info on) into `photos-originals/` at the
+     repo root (gitignored). iCloud originals make the export slow (~1–2 photos/min).
+   - `scripts/photos.py` converts them: day from the local EXIF date (10 Oct = day 1),
+     WebP at 1600 px and 600 px long edge into `docs/…/img/dayN/<name>-1600|600.webp`,
+     all metadata stripped (no GPS). Writes `data/photos.json` (src, day, taken, file, w,
+     h, featured, caption{fr,en}); keeps featured/caption on re-runs; only converts new or
+     changed files. Reports dates outside 10–19 Oct and photos >3 km from the day's track.
+     Videos (.mov) are skipped; Philippe hasn't decided whether to include any.
+   - Page: each day shows 6 previews (featured ones, else spread evenly through the day)
+     with "+N" and "See all", and a full-screen `<dialog id="viewer">` (arrows, keys,
+     swipe). Export loses album order, hence the even spread / `featured` flag.
+   - Beer CSS traps hit here: buttons have a fixed size and squash child images to 24 px
+     (override min/max width/height with !important); dialogs are centred with
+     translateX(-50%) (override transform).
+   Strava activity URLs: https://www.strava.com/activities/<id> with ids in days.json.
 2. Philippe's own notes per day, in `data/notes.json`. Done: all 10 days (day 10's "hostel" is the Porto hotel after the bus back).
 3. Possibly a per-day elevation profile (Strava altitude streams are available
    through the MCP `get_activity_streams` tool if a Strava connector is present).
