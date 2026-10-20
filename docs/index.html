@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Philippe Bellefeuille</title>
+<meta name="description" content="Récits de voyage et billets de Philippe Bellefeuille.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beercss@5.0.3/dist/cdn/beer.min.css">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.posts { display: grid; gap: 1rem; }
+.posts a { display: block; text-decoration: none; }
+.posts article { background: var(--card); transition: background-color .2s; }
+.posts a:hover article, .posts a:focus-visible article { background-color: var(--surface-container-high); }
+.posts h5 { margin-block: .25rem; }
+h2.section { font-size: .875rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); margin: 2.5rem 0 1rem; }
+</style>
+</head>
+<body data-lang="fr">
+<header class="appbar narrow">
+  <nav>
+    <a class="brand" href="./">Philippe Bellefeuille</a>
+    <div class="spacer"></div>
+    <nav class="group connected" aria-label="Language">
+      <button class="small" data-set-lang="fr">FR</button>
+      <button class="small" data-set-lang="en">EN</button>
+    </nav>
+  </nav>
+</header>
+
+<main class="container narrow">
+  <h3>Philippe Bellefeuille</h3>
+  <p class="large-text muted"><span lang="fr">Récits de voyage et quelques billets.</span><span lang="en">Trip reports and the occasional post.</span></p>
+
+  <h2 class="section"><span lang="fr">Voyages</span><span lang="en">Trips</span></h2>
+  <div class="posts">
+    <a href="trips/camino-portugues-2026/">
+      <article class="border">
+        <div class="small-text muted"><span lang="fr">10 – 19 octobre 2026 · 252 km · 10 étapes</span><span lang="en">10 – 19 October 2026 · 252 km · 10 stages</span></div>
+        <h5><span lang="fr">Camino Portugués : dix jours vers Saint-Jacques</span><span lang="en">Camino Portugués: ten days to Santiago</span></h5>
+        <p class="muted"><span lang="fr">De Matosinhos à Saint-Jacques-de-Compostelle, par la côte puis le chemin central.</span><span lang="en">Matosinhos to Santiago de Compostela, along the coast then the central route.</span></p>
+      </article>
+    </a>
+  </div>
+
+  <h2 class="section">Blog</h2>
+  <p class="muted"><span lang="fr">Bientôt.</span><span lang="en">Coming soon.</span></p>
+
+  <footer class="site">© 2026 Philippe Bellefeuille</footer>
+</main>
+<script src="assets/site.js"></script>
+</body>
+</html>

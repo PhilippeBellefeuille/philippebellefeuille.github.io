@@ -1,0 +1,102 @@
+/* Site theme on top of Beer CSS (Material Design 3).
+   Neutral grey surfaces with a muted slate-blue primary. Light by default,
+   dark when the OS asks for it (site.js adds body.dark). */
+
+:root,
+body.light {
+  --font: Roboto, "Helvetica Neue", Arial, sans-serif;
+  --primary: #3a5f7d;
+  --on-primary: #ffffff;
+  --primary-container: #d0e4f7;
+  --on-primary-container: #0e1d2a;
+  --secondary: #555f69;
+  --on-secondary: #ffffff;
+  --secondary-container: #dce3ea;
+  --on-secondary-container: #121c25;
+  --tertiary: #66597a;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #ece0ff;
+  --on-tertiary-container: #211633;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
+  --background: #f9f9fb;
+  --on-background: #1a1c1e;
+  --surface: #f9f9fb;
+  --on-surface: #1a1c1e;
+  --surface-variant: #e0e2e6;
+  --on-surface-variant: #44474b;
+  --outline: #74777c;
+  --outline-variant: #c4c6cb;
+  --shadow: #000000;
+  --scrim: #000000;
+  --inverse-surface: #2f3033;
+  --inverse-on-surface: #f1f0f3;
+  --inverse-primary: #a3c9ea;
+  --surface-dim: #dadadc;
+  --surface-bright: #f9f9fb;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f3f6;
+  --surface-container: #eeeef0;
+  --surface-container-high: #e8e8eb;
+  --surface-container-highest: #e2e2e5;
+  --card: #ffffff;
+}
+
+body.dark {
+  --primary: #a3c9ea;
+  --on-primary: #01324d;
+  --primary-container: #214a66;
+  --on-primary-container: #d0e4f7;
+  --secondary: #bdc7d2;
+  --on-secondary: #27313a;
+  --secondary-container: #3d4751;
+  --on-secondary-container: #d9e3ee;
+  --tertiary: #d0c0e8;
+  --on-tertiary: #362b4a;
+  --tertiary-container: #4d4162;
+  --on-tertiary-container: #ece0ff;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
+  --background: #202225;
+  --on-background: #e3e2e5;
+  --surface: #202225;
+  --on-surface: #e3e2e5;
+  --surface-variant: #4a4d52;
+  --on-surface-variant: #c4c6cb;
+  --outline: #8e9196;
+  --outline-variant: #4a4d52;
+  --inverse-surface: #e3e2e5;
+  --inverse-on-surface: #2f3033;
+  --inverse-primary: #3a5f7d;
+  --card: #2a2c2f;
+  --surface-dim: #202225;
+  --surface-bright: #46484c;
+  --surface-container-lowest: #1b1d20;
+  --surface-container-low: #27292c;
+  --surface-container: #2c2e31;
+  --surface-container-high: #35373a;
+  --surface-container-highest: #3f4144;
+}
+
+body { font-size: 1rem; line-height: 1.6; letter-spacing: normal; }
+main.container { overflow: visible; max-inline-size: 72rem; margin: 0 auto; padding: 0 1rem 3rem; }
+main.container.narrow { max-inline-size: 48rem; }
+
+/* Bilingual text: only the active language shows. */
+body [lang] { display: none; }
+body[data-lang="fr"] [lang="fr"], body[data-lang="en"] [lang="en"] { display: inline; }
+
+/* Top app bar */
+.appbar { display: block; padding: 0; border-block-end: 1px solid var(--outline-variant); margin-block-end: 2rem; }
+.appbar > nav { min-block-size: 4rem; max-inline-size: 72rem; margin: 0 auto; padding: 0 1rem; }
+.appbar.narrow > nav { max-inline-size: 48rem; }
+.appbar a.brand { font-weight: 500; font-size: 1.125rem; text-decoration: none; }
+.appbar .crumb { color: var(--on-surface-variant); }
+.appbar .spacer { flex: 1; }
+
+footer.site { margin-block-start: 3rem; padding: 1rem 0; border-block-start: 1px solid var(--outline-variant); color: var(--on-surface-variant); font-size: .875rem; }
+.muted { color: var(--on-surface-variant); }
