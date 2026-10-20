@@ -22,6 +22,9 @@ hand-written or script-generated static HTML, no framework, no Jekyll.
   browser language (fr* → FR, anything else → EN). Clicking FR/EN also writes `?lang=` into
   the address bar so copied links keep the language. Pages that rewrite the URL (the
   trip page sets `#dayN`) must keep `location.search`.
+- Analytics: GoatCounter (philippebellefeuille.goatcounter.com), loaded from `site.js` so
+  every page is covered. Counts by `location.pathname` only (so `?lang=` doesn't split
+  stats). Cookieless, no consent banner. It ignores localhost, so previews don't count.
 - French numbers: thousands separator is a narrow no-break space (`fr_int` in the build). Hide rule must be `body [lang]{display:none}` (not bare `[lang]`, which
   would hide `<html lang>`).
 - Material Design 3 via Beer CSS (`beercss@5.0.3` from jsdelivr, CSS only, no beer.js),

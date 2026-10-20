@@ -34,6 +34,15 @@
     b.addEventListener('click', function () { setLang(b.dataset.setLang, true); });
   });
 
+  // Analytics: GoatCounter (cookieless, no consent banner needed). Ignores localhost.
+  // Count by path only, so ?lang=fr / ?lang=en visits add up to one page in the stats.
+  window.goatcounter = { path: function () { return location.pathname; } };
+  var gc = document.createElement('script');
+  gc.async = true;
+  gc.src = 'https://gc.zgo.at/count.js';
+  gc.dataset.goatcounter = 'https://philippebellefeuille.goatcounter.com/count';
+  document.head.appendChild(gc);
+
   var fromUrl = valid(new URLSearchParams(location.search).get('lang'));
   var saved = null;
   try { saved = valid(localStorage.getItem('lang')); } catch (e) {}
