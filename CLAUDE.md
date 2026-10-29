@@ -47,6 +47,11 @@ hand-written or script-generated static HTML, no framework, no Jekyll.
   follows a sibling, with a selector strong enough to need `!important` to undo.
   Beer makes `body` and `header` CSS grids; both are reset to `display:block` (the body
   grid sized the page to its text, so the width changed between FR and EN).
+- Link previews (Open Graph): each page has og:* and twitter:card tags in its <head>;
+  images are 1200x630 JPEGs made by `scripts/og_images.py` (Roboto from `scripts/fonts/`,
+  drawn arrow since Roboto lacks →): `docs/og.jpg` (home) and `docs/trips/<slug>/og.jpg`.
+  Text on them is language-neutral. Bump `?v=` on og:image when the image changes, or
+  platforms keep showing the old one. New pages need their own tags and image.
 - Images: max ~1600px wide, WebP or JPEG, with `loading="lazy"` and `alt` text.
 - Philippe's writing preference: concise, opinionated, plain prose, no em dashes.
 

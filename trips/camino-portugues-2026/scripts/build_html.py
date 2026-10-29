@@ -98,6 +98,19 @@ page=f"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Camino Portugués 2026 · Philippe Bellefeuille</title>
 <meta name="description" content="Dix jours sur le Caminho Português, de Matosinhos à Saint-Jacques-de-Compostelle, octobre 2026.">
+<link rel="canonical" href="https://philippebellefeuille.com/trips/camino-portugues-2026/">
+<!-- Link previews (WhatsApp, iMessage, Facebook, LinkedIn, Slack, X). Image: scripts/og_images.py.
+     Crawlers don't run JS, so title/description are fixed: FR and EN together. -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Philippe Bellefeuille">
+<meta property="og:url" content="https://philippebellefeuille.com/trips/camino-portugues-2026/">
+<meta property="og:title" content="Camino Portugués 2026 · Matosinhos → Santiago de Compostela">
+<meta property="og:description" content="10 jours, 252 km à pied jusqu’à Saint-Jacques-de-Compostelle. · 10 days, 252 km on foot to Santiago de Compostela.">
+<meta property="og:image" content="https://philippebellefeuille.com/trips/camino-portugues-2026/og.jpg?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The cathedral of Santiago de Compostela, with the Camino Portugués route from Matosinhos">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/beercss@5.0.3/dist/cdn/beer.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
